@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tutoriel Python + Docker + FastAPI</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        margin: 20px;
+        background-color: #f5f5f5;
+    }
+    h2, h3 {
+        color: #1E3A8A;
+    }
+    pre {
+        background-color: #1e293b;
+        color: #f8fafc;
+        padding: 15px;
+        border-radius: 8px;
+        overflow-x: auto;
+        position: relative;
+    }
+    button.copy-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 5px 10px;
+        background-color: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    button.copy-btn:hover {
+        background-color: #2563eb;
+    }
+    code {
+        font-family: monospace;
+    }
+    section {
+        margin-bottom: 40px;
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+    }
+</style>
+</head>
+<body>
+
+<h1>Tutoriel Complet Python + Docker + FastAPI</h1>
+<p>Développement direct sur serveur Ubuntu via VS Code Remote SSH avec Docker, FastAPI, Nginx, et rechargement automatique des fichiers Python.</p>
+
+<section>
+<h2>🧭 OBJECTIF FINAL</h2>
+<ul>
+    <li>💻 Développement directement sur serveur via VS Code Remote SSH</li>
+    <li>🐳 Docker avec backend Python FastAPI et Nginx</li>
+    <li>⚡ Rechargement automatique des fichiers Python (--reload)</li>
+    <li>🔌 Docker Compose prêt à lancer facilement</li>
+    <li>📝 Résumé clair et commandes expliquées</li>
+</ul>
+</section>
+
+<section>
+<h2>🔷 PARTIE 0 — PRÉREQUIS</h2>
+<p>Avant de commencer, assure-toi d’avoir :</p>
+<ul>
+    <li>Serveur Ubuntu accessible (IP + utilisateur + mot de passe ou clé SSH)</li>
+    <li>PC avec Visual Studio Code</li>
+    <li>Connexion Internet sur serveur et PC</li>
+</ul>
+</section>
+
+<section>
+<h2>🔷 PARTIE 1 — CONNEXION AU SERVEUR</h2>
+
+<h3>1️⃣ Connexion SSH</h3>
+<pre>
+<code>ssh user@IP_DU_SERVEUR</code>
+<button class="copy-btn">Copier</button>
+</pre>
+<p>Explication :<br>
+ssh → Secure Shell, pour se connecter à distance<br>
+user → ton nom d’utilisateur sur le serveur<br>
+IP_DU_SERVEUR → adresse IP du serveur Ubuntu</p>
+
+<h3>2️⃣ Vérifier la connexion</h3>
+<pre>
+<code>pwd</code>
+<button class="copy-btn">Copier</button>
+</pre>
+<p>Explication :<br>
+pwd → print working directory, montre le dossier actuel<br>
+Important pour vérifier que tu es bien sur le serveur</p>
+</section>
+
+<section>
+<h2>🔷 PARTIE 2 — MISE À JOUR ET OUTILS DE BASE</h2>
+
+<h3>3️⃣ Mettre à jour la liste des paquets</h3>
+<pre>
+<code>sudo apt update</code>
+<button class="copy-btn">Copier</button>
+</pre>
+<p>Explication :<br>
+sudo → exécute la commande en administrateur<br>
+apt update → met à jour la liste des paquets disponibles</p>
+
+<h3>4️⃣ Installer les mises à jour</h3>
+<pre>
+<code>sudo apt upgrade -y</code>
+<button class="copy-btn">Copier</button>
+</pre>
+<p>Explication :<br>
+apt upgrade → installe les dernières versions des paquets<br>
+-y → confirme automatiquement</p>
+
+<h3>5️⃣ Installer outils essentiels</h3>
+<pre>
+<code>sudo apt install -y git curl unzip ufw</code>
+<button class="copy-btn">Copier</button>
+</pre>
+<p>Explication :<br>
+git → contrôle de version<br>
+curl → télécharger fichiers ou scripts depuis internet<br>
+unzip → décompresser fichiers .zip<br>
+ufw → firewall simple</p>
+</section>
+
+<section>
+<h2>🔷 PARTIE 3 — SÉCURISATION DU SERVEUR</h2>
+
+<h3>6️⃣ Activer firewall et autoriser SSH</h3>
+<pre>
+<code>sudo ufw allow OpenSSH
+sudo ufw allow 80
+sudo ufw allow 8000
+sudo ufw enable</code>
+<button class="copy-btn">Copier</button>
+</pre>
+<p>Explication :<br>
+ufw allow OpenSSH → permet connexion SSH<br>
+ufw allow 80 → autorise HTTP<br>
+ufw allow 8000 → pour backend FastAPI<br>
+ufw enable → active firewall</p>
+
+<h3>7️⃣ Vérifier le statut du firewall</h3>
+<pre>
+<code>sudo ufw status</code>
+<button class="copy-btn">Copier</button>
+</pre>
+</section>
+
+<section>
+<h2>🔷 PARTIE 4 — INSTALLATION DOCKER</h2>
+
+<h3>8️⃣ Installer Docker</h3>
+<pre>
+<code>sudo apt install -y docker.io</code>
+<button class="copy-btn">Copier</button>
+</pre>
+<p>Explication :<br>
+docker.io → installe Docker Engine</p>
+
+<h3>9️⃣ Démarrer et activer Docker</h3>
+<pre>
+<code>sudo systemctl start docker
+sudo systemctl enable docker</code>
+<button class="copy-btn">Copier</button>
+</pre>
+<p>Explication :<br>
+systemctl start → démarre le service<br>
+systemctl enable → démarre automatiquement au reboot</p>
+
+<h4>Option pratique : éviter sudo</h4>
+<pre>
+<code>sudo usermod -aG docker $USER
+newgrp docker</code>
+<button class="copy-btn">Copier</button>
+</pre>
+<p>usermod -aG docker $USER → ajoute ton utilisateur au groupe Docker<br>
+newgrp docker → recharge la session pour appliquer le groupe</p>
+
+<h3>10️⃣ Tester Docker</h3>
+<pre>
+<code>docker run hello-world</code>
+<button class="copy-btn">Copier</button>
+</pre>
+
+<h3>11️⃣ Installer Docker Compose</h3>
+<pre>
+<code>sudo apt install -y docker-compose
+docker-compose --version</code>
+<button class="copy-btn">Copier</button>
+</pre>
+<p>Docker Compose → outil pour lancer plusieurs conteneurs ensemble</p>
+</section>
+
+<section>
+<h2>🔷 PARTIE 5 — STRUCTURE DU PROJET</h2>
+
+<h3>12️⃣ Créer dossiers projet</h3>
+<pre>
+<code>mkdir -p ~/app/{backend,frontend,nginx}
+cd ~/app</code>
+<button class="copy-btn">Copier</button>
+</pre>
+<p>mkdir -p → crée plusieurs dossiers d’un coup<br>
+~/app → dossier principal</p>
+</section>
+
+<section>
+<h2>🔷 PARTIE 6 — BACKEND PYTHON (FastAPI)</h2>
+
+<h3>13️⃣ Fichier main.py</h3>
+<pre>
+<code>nano backend/main.py</code>
+<button class="copy-btn">Copier</button>
+</pre>
+<p>Colle :</p>
+<pre>
+<code>from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/")
+def read_root():
+    return {"message": "Backend OK 🚀"}</code>
+<button class="copy-btn">Copier</button>
+</pre>
+
+<h3>14️⃣ Dockerfile backend pour DEV</h3>
+<pre>
+<code>nano backend/Dockerfile</code>
+<button class="copy-btn">Copier</button>
+</pre>
+<p>Colle :</p>
+<pre>
+<code>FROM python:3.11
+WORKDIR /app
+COPY . .
+RUN pip install fastapi uvicorn
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]</code>
+<button class="copy-btn">Copier</button>
+</pre>
+<p>Explications importantes :<br>
+--reload → redémarre automatiquement FastAPI quand tu modifies un fichier<br>
+COPY . . → copie ton code dans le conteneur<br>
+RUN pip install ... → installe dépendances dans l’image</p>
+
+<h3>15️⃣ Docker Compose backend volume pour DEV</h3>
+<pre>
+<code>backend:
+  build: ./backend
+  container_name: backend
+  volumes:
+    - ./backend:/app
+  ports:
+    - "8000:8000"</code>
+<button class="copy-btn">Copier</button>
+</pre>
+<p>Astuce DEV : Avec le volume, tes modifications Python sont instantanément visibles dans le conteneur → pas besoin de rebuild</p>
+</section>
+
+<section>
+<h2>🔷 PARTIE 7 — NGINX</h2>
+
+<h3>16️⃣ Config default.conf</h3>
+<pre>
+<code>nano nginx/default.conf</code>
+<button class="copy-btn">Copier</button>
+</pre>
+<p>Colle :</p>
+<pre>
+<code>server {
+    listen 80;
+
+    location / {
+        return 200 'Frontend à venir...';
+        add_header Content-Type text/plain;
+    }
+
+    location /api/ {
+        proxy_pass http://backend:8000/;
+    }
+}</code>
+<button class="copy-btn">Copier</button>
+</pre>
+<p>/api/ → redirige vers backend<br>
+/ → frontend placeholder</p>
+
+<h3>17️⃣ Docker Compose Nginx</h3>
+<pre>
+<code>nginx:
+  image: nginx
+  container_name: nginx
+  ports:
+    - "80:80"
+  volumes:
+    - ./nginx:/etc/nginx/conf.d
+  depends_on:
+    - backend</code>
+<button class="copy-btn">Copier</button>
+</pre>
+<p>volumes → remplace les fichiers conf du conteneur avec les tiens</p>
+</section>
+
+<section>
+<h2>🔷 PARTIE 8 — LANCEMENT</h2>
+
+<h3>18️⃣ Lancer DEV serveur</h3>
+<pre>
+<code>docker-compose up</code>
+<button class="copy-btn">Copier</button>
+</pre>
+<p>démarre conteneurs existants, pas besoin de rebuild si tu modifies Python</p>
+
+<h4>Background</h4>
+<pre>
+<code>docker-compose up -d</code>
+<button class="copy-btn">Copier</button>
+</pre>
+<p>-d → détaché, terminal libre</p>
+
+<h3>19️⃣ Tester backend</h3>
+<p>Ouvre navigateur :</p>
+<pre>
+<code>http://IP_DU_SERVEUR:8000/</code>
+<button class="copy-btn">Copier</button>
+</pre>
+<p>→ tu dois voir : {"message":"Backend OK 🚀"}</p>
+</section>
+
+<section>
+<h2>🔷 PARTIE 9 — VS CODE REMOTE SSH</h2>
+
+<h3>20️⃣ Installer extension</h3>
+<p>Remote - SSH</p>
+
+<h3>21️⃣ Config SSH</h3>
+<pre>
+<code>nano ~/.ssh/config</code>
+<button class="copy-btn">Copier</button>
+</pre>
+<p>Ajoute :</p>
+<pre>
+<code>Host monserveur
+    HostName IP_DU_SERVEUR
+    User user</code>
+<button class="copy-btn">Copier</button>
+</pre>
+
+<h3>22️⃣ Connexion via VS Code</h3>
+<p>Ctrl+Shift+P → Remote-SSH: Connect to Host → monserveur<br>
+Ouvre /home/user/app</p>
+</section>
+
+<section>
+<h2>🔷 PARTIE 10 — RÉSUMÉ CLÉ DES COMMANDES</h2>
+<pre>
+<code>
+Connexion serveur
+ssh user@IP
+Connecte à distance
+
+Vérifier dossier
+pwd
+Affiche répertoire actuel
+
+Update apt
+sudo apt update
+Récupère listes paquets
+
+Upgrade apt
+sudo apt upgrade -y
+Installe les updates
+
+Installer outils
+sudo apt install git curl unzip ufw -y
+Outils base + firewall
+
+Firewall
+sudo ufw allow OpenSSH/80/8000 && sudo ufw enable
+Sécurise serveur
+
+Docker start
+sudo systemctl start docker && enable
+Lancer Docker
+
+Ajouter user Docker
+sudo usermod -aG docker $USER
+Évite sudo
+
+Docker test
+docker run hello-world
+Vérifie Docker fonctionne
+
+Docker Compose
+docker-compose up -d
+Lancer conteneurs en arrière-plan
+
+Redémarrer conteneurs
+docker-compose restart
+Redémarre tous conteneurs
+
+Vérifier conteneurs
+docker ps
+Liste conteneurs actifs
+
+VS Code Remote SSH
+config ~/.ssh/config + Remote-SSH
+Développer directement sur serveur
+
+Backend auto reload
+CMD ["uvicorn","--reload"]
+Dev rapide, pas besoin de rebuild
+</code>
+<button class="copy-btn">Copier</button>
+</pre>
+</section>
+
+<section>
+<h2>🔷 ✅ POINTS IMPORTANTS DEV</h2>
+<ul>
+    <li>Monte le backend avec un volume → modifications instantanées</li>
+    <li>Utilise --reload avec Uvicorn → pas besoin de rebuild pour chaque changement</li>
+    <li>--build seulement si Dockerfile ou dépendances changent</li>
+    <li>Nginx fonctionne automatiquement via Docker → ton fichier .conf suffit</li>
+</ul>
+<p>💡 Avec ça, tu as un environnement complet, prêt pour coder et tester ton projet, sans rebuild inutile.</p>
+</section>
+
+<script>
+document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const code = btn.previousElementSibling.textContent;
+        navigator.clipboard.writeText(code).then(() => {
+            btn.textContent = 'Copié !';
+            setTimeout(() => btn.textContent = 'Copier', 1500);
+        });
+    });
+});
+</script>
+
+</body>
+</html>
